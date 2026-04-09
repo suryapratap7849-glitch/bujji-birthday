@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Favorite Human</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-top: #FFF9F5;
+            --bg-bottom: #F3E7E0;
+            --dusty-rose: #D4A373;
+            --soft-pink: #E9BCB7;
+            --sage: #B7B7A4;
+            --glass: rgba(255, 255, 255, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --text: #5E5B52;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-top), var(--bg-bottom));
+            background-attachment: fixed;
+            font-family: 'Lato', sans-serif;
+            color: var(--text);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* --- Falling Rose Petals Background --- */
+        #petal-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Behind everything */
+            pointer-events: none; /* User can click through it */
+        }
+
+        /* --- Aesthetic Floating Blobs (Pinterest style) --- */
+        .bg-blobs {
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            filter: blur(100px);
+            opacity: 0.4;
+        }
+
+        .blob {
+            position: absolute;
+            background: var(--soft-pink);
+            border-radius: 50%;
+            animation: drift 25s infinite alternate;
+        }
+
+        @keyframes drift {
+            from { transform: translate(0, 0) rotate(0deg); }
+            to { transform: translate(150px, 200px) rotate(180deg); }
+        }
+
+        /* --- Sections & Layout --- */
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.8rem, 9vw, 5rem);
+            color: var(--dusty-rose);
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.03);
+            max-width: 700px;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        /* --- The Blooming Flower --- */
+        .flower-hero {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin-bottom: 30px;
+        }
+
+        .petal {
+            fill: var(--soft-pink);
+            transform-origin: center;
+            opacity: 0;
+            transform: scale(0);
+            animation: bloom 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes bloom {
+            to { opacity: 0.9; transform: scale(1) rotate(var(--r)); }
+        }
+
+        /* --- Interactive Letter --- */
+        .envelope-container {
+            cursor: pointer;
+            width: 300px;
+            height: 200px;
+            background: var(--sage);
+            position: relative;
+            border-radius: 0 0 15px 15px;
+            margin: 60px auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            width: 0; height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-top: 110px solid #A3A38F;
+            transform-origin: top;
+            transition: 0.7s;
+            z-index: 3;
+        }
+
+        .letter {
+            position: absolute;
+            bottom: 5px; left: 15px;
+            width: 270px; height: 180px;
+            background: white;
+            padding: 25px;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.3rem;
+            transition: 0.7s;
+            z-index: 1;
+            box-shadow: 0 0 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .envelope-container.open .envelope-flap { transform: rotateX(180deg); }
+        .envelope-container.open .letter { transform: translateY(-130px); height: 320px; z-index: 4; }
+
+        /* --- GAME 1: Catch the Flowers --- */
+        #game-area {
+            width: 100%;
+            height: 350px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            border: 2px dashed var(--soft-pink);
+            margin-top: 25px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.02);
+        }
+
+        .falling-flower {
+            position: absolute;
+            font-size: 2.2rem;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* --- GAME 2: Memory Match --- */
+        .memory-game {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+            perspective: 1000px;
+        }
+
+        .memory-card {
+            background-color: var(--sage);
+            height: 100px;
+            border-radius: 15px;
+            cursor: pointer;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .memory-card.flip {
+            transform: rotateY(180deg);
+            background-color: white;
+        }
+
+        .front-face, .back-face {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            border-radius: 15px;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .front-face {
+            transform: rotateY(180deg);
+            color: var(--text);
+        }
+
+        .back-face {
+            color: white;
+        }
+
+        /* --- Buttons --- */
+        .btn-container {
+            height: 120px;
+            position: relative;
+            margin-top: 25px;
+        }
+
+        .btn {
+            background: var(--dusty-rose);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 50px;
+            font-family: 'Lato', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin: 10px;
+        }
+
+        .btn:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(212, 163, 115, 0.4); }
+
+        .btn-no { background: var(--sage); position: absolute; }
+
+        /* --- Utility --- */
+        .subtitle {
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            color: var(--sage);
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .glass-card { padding: 30px 20px; }
+            .memory-game { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+            .memory-card { height: 80px; font-size: 2.5rem; }
+            .envelope-container { width: 260px; }
+            .envelope-flap { border-left-width: 130px; border-right-width: 130px; }
+            .letter { width: 230px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <canvas id="petal-canvas"></canvas>
+
+    <div class="bg-blobs">
+        <div class="blob" style="width: 500px; height: 500px; top: -150px; left: -150px;"></div>
+        <div class="blob" style="width: 400px; height: 400px; bottom: -100px; right: -100px; background: #D4A37333;"></div>
+        <div class="blob" style="width: 300px; height: 300px; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #B7B7A422;"></div>
+    </div>
+
+    <section>
+        <div class="flower-hero">
+            <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="6" fill="#F3E7E0" />
+                <path class="petal" style="--r: 0deg" d="M50 50 Q65 10 50 10 Q35 10 50 50" />
+                <path class="petal" style="--r: 72deg" d="M50 50 Q65 10 50 10 Q35 10 50 50" />
+                <path class="petal" style="--r: 144deg" d="M50 50 Q65 10 50 10 Q35 10 50 50" />
+                <path class="petal" style="--r: 216deg" d="M50 50 Q65 10 50 10 Q35 10 50 50" />
+                <path class="petal" style="--r: 288deg" d="M50 50 Q65 10 50 10 Q35 10 50 50" />
+            </svg>
+        </div>
+        <h1>Happy Birthday, <br><span style="font-style: italic; font-weight: 400;">Bujjiiii</span></h1>
+        <p class="subtitle">Made with love for you</p>
+        <p style="margin-top: 40px; opacity: 0.7;">Scroll down to find your surprises...</p>
+    </section>
+
+    <section>
+        <div class="glass-card">
+            <h2>Catch My Love</h2>
+            <p>Tap the flowers before they disappear to collect them!</p>
+            <div id="game-area"></div>
+            <p id="score-board" style="margin-top: 15px; font-weight: bold; color: var(--dusty-rose);">Flowers Caught: 0</p>
+        </div>
+    </section>
+
+    <section>
+        <h2 style="margin-bottom: 30px;">For Your Eyes Only</h2>
+        <div class="envelope-container" onclick="this.classList.toggle('open')">
+            <div class="envelope-flap"></div>
+            <div class="letter">
+                My fav Bujjuuu, <br><br>
+                You are the prettiest soul i ever met. 
+                past few years are my best years because of you,watching you grow will be my favorite adventure.
+                Thank you for be with me.<br><br>
+                Be a great doctor, yours Suryaa
+            </div>
+        </div>
+        <p style="margin-top: 220px; opacity: 0.6;">(Tap to open your note)</p>
+    </section>
+
+    <section>
+        <div class="glass-card">
+            <h2>Love Memory Match</h2>
+            <p>Find the matching pairs of romantic emojis!</p>
+            <div class="memory-game" id="memoryGame">
+                </div>
+            <button class="btn" style="margin-top: 25px;" onclick="resetMemoryGame()">Reset Game</button>
+        </div>
+    </section>
+
+    <section>
+        <div class="glass-card">
+            <h2>One Last Thing...</h2>
+            <p>After all these surprises, am I still your absolute favorite person?</p>
+            <div class="btn-container">
+                <button class="btn" onclick="celebrate()">Obviously Yes</button>
+                <button class="btn btn-no" id="noBtn" onmouseover="moveNo()">No</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // --- 0. Falling Rose Petals Background ---
+        const canvas = document.getElementById('petal-canvas');
+        const ctx = canvas.getContext('2d');
+        let petals = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Petal {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height - canvas.height;
+                this.size = Math.random() * 8 + 5;
+                this.speedY = Math.random() * 1.5 + 0.5;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.angle = Math.random() * 360;
+                this.spin = Math.random() * 2 - 1;
+                // Deep rose pink color, slightly translucent
+                this.color = `rgba(212, 163, 115, ${Math.random() * 0.4 + 0.3})`; 
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.angle += this.spin;
+                if (this.y > canvas.height) {
+                    this.y = -10;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                // Draw a simple petal shape
+                ctx.ellipse(0, 0, this.size, this.size / 1.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function initPetals() {
+            for (let i = 0; i < 60; i++) {
+                petals.push(new Petal());
+            }
+        }
+
+        function animatePetals() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            petals.forEach(petal => {
+                petal.update();
+                petal.draw();
+            });
+            requestAnimationFrame(animatePetals);
+        }
+        initPetals();
+        animatePetals();
+
+
+        // --- 1. Catch the Flowers Game ---
+        const gameArea = document.getElementById('game-area');
+        const scoreBoard = document.getElementById('score-board');
+        let score = 0;
+        let gameInterval;
+
+        function createFallingFlower() {
+            if (!gameArea) return;
+            const flower = document.createElement('div');
+            flower.classList.add('falling-flower');
+            flower.innerHTML = '🌸';
+            flower.style.left = Math.random() * (gameArea.clientWidth - 40) + 'px';
+            flower.style.top = '-50px';
+            gameArea.appendChild(flower);
+
+            let pos = -50;
+            let fall = setInterval(() => {
+                if (pos > 350) { // Height of game area
+                    clearInterval(fall);
+                    flower.remove();
+                } else {
+                    pos += 2.5; // Fall speed
+                    flower.style.top = pos + 'px';
+                }
+            }, 20);
+
+            flower.onclick = () => {
+                score++;
+                scoreBoard.innerText = `Flowers Caught: ${score}`;
+                flower.innerHTML = '✨'; // Sparkle on catch
+                flower.style.transform = 'scale(1.5)';
+                setTimeout(() => flower.remove(), 250);
+                clearInterval(fall);
+            };
+        }
+
+        // Start game when section is near view
+        const observer = new IntersectionObserver((entries) => {
+            if(entries[0].isIntersecting) {
+                if(!gameInterval) gameInterval = setInterval(createFallingFlower, 1200);
+            } else {
+                clearInterval(gameInterval);
+                gameInterval = null;
+            }
+        }, { threshold: 0.1 });
+        observer.observe(gameArea);
+
+
+        // --- 2. Memory Match Game ---
+        const memoryGrid = document.getElementById('memoryGame');
+        const emojis = ['💖', '💖', '🌹', '🌹', '🎁', '🎁', '🕯️', '🕯️', '✨', '✨', '🎈', '🎈'];
+        let hasFlippedCard = false;
+        let lockBoard = false;
+        let firstCard, secondCard;
+
+        function shuffle(array) {
+            array.sort(() => Math.random() - 0.5);
+        }
+
+        function createMemoryBoard() {
+            shuffle(emojis);
+            memoryGrid.innerHTML = '';
+            emojis.forEach(emoji => {
+                const card = document.createElement('div');
+                card.classList.add('memory-card');
+                card.dataset.emoji = emoji;
+
+                const frontFace = document.createElement('div');
+                frontFace.classList.add('front-face');
+                frontFace.innerHTML = emoji;
+
+                const backFace = document.createElement('div');
+                backFace.classList.add('back-face');
+                backFace.innerHTML = '🤍'; // Card back icon
+
+                card.appendChild(frontFace);
+                card.appendChild(backFace);
+                card.addEventListener('click', flipCard);
+                memoryGrid.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+
+            this.classList.add('flip');
+
+            if (!hasFlippedCard) {
+                hasFlippedCard = true;
+                firstCard = this;
+                return;
+            }
+
+            secondCard = this;
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        function disableCards() {
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+            resetBoard();
+            
+            // Check win condition
+            if(document.querySelectorAll('.memory-card.flip').length === emojis.length) {
+                setTimeout(() => alert("You matched them all! ❤️ You're good at this!"), 500);
+            }
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            setTimeout(() => {
+                firstCard.classList.remove('flip');
+                secondCard.classList.remove('flip');
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
+        }
+
+        function resetMemoryGame() {
+            createMemoryBoard();
+        }
+        createMemoryBoard(); // Initialize on load
+
+
+        // --- 3. Final Question Logic ---
+        function moveNo() {
+            const btn = document.getElementById('noBtn');
+            // Move within viewport, but keep away from edges
+            const x = Math.random() * (window.innerWidth - 150) + 25;
+            const y = Math.random() * (window.innerHeight - 100) + 25;
+            btn.style.position = 'fixed';
+            btn.style.left = x + 'px';
+            btn.style.top = y + 'px';
+            btn.style.zIndex = '1000';
+        }
+
+        function celebrate() {
+            // Reset "No" button position if it moved
+            const noBtn = document.getElementById('noBtn');
+            noBtn.style.position = 'absolute';
+            noBtn.style.left = 'auto';
+            noBtn.style.top = '0';
+            
+            alert("I knew it! ❤️ You make me the happiest person. Happy Birthday!");
+            
+            // Confetti effect
+            for(let i=0; i<60; i++) {
+                const conf = document.createElement('div');
+                conf.innerText = ['🌸','✨','💖'][Math.floor(Math.random()*3)];
+                conf.style.position = 'fixed';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.top = '-30px';
+                conf.style.fontSize = Math.random() * 20 + 15 + 'px';
+                conf.style.zIndex = '9999';
+                conf.style.pointerEvents = 'none';
+                conf.style.transition = 'transform 4s cubic-bezier(0,1,1,1), opacity 4s';
+                document.body.appendChild(conf);
+                
+                setTimeout(() => {
+                    conf.style.transform = `translateY(110vh) translateX(${Math.random()*100-50}px) rotate(${Math.random()*720}deg)`;
+                    conf.style.opacity = '0';
+                }, 10);
+                setTimeout(() => conf.remove(), 4000);
+            }
+        }
+    </script>
+</body>
+</html>
